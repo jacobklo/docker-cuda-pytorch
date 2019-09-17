@@ -1,0 +1,56 @@
+docker ps -as
+# This show all container status, and size
+
+docker run --interactive --tty --rm --gpus all --env "TERM=xterm-256color" --volume ~/Desktop/workspace:/media/workspace --user $(id -u):$(id -g) --publish 80:80 pytorch-docker:0.3.7 bash
+
+# This start a docker-image with
+        "--interactive          Keep STDIN open even if not attached"
+        "--tty                  Allocate a pseudo-TTY"
+        "--rm                   Automatically remove the container when it exits"
+        "--env list             Set environment variables"
+        --volume list           Bind mount a volume (host:guest)"
+        "--user string          Username or UID, avoid files in volume created as root, hard to manipulate (format: <name|uid>[:<group|gid>])"
+        "--publish list         Publish a container's port(s) to the host (host:guest)"
+
+        and run a bash, which can be detach
+
+
+docker run -it --rm --gpus all --user 1000:1000 -p 8888:8888 -v ~/Desktop/home_data:/home cuda-pytorch-jupyter-fastai:0.7.1
+# If you set environmental variables and use CMD in Dockerfile, then you don't need to do it in commanline
+
+ENV TERM xterm-256color
+CMD ["bash", "-l"]
+# In Dockerfile
+
+ctrl-p, and then ctrl-q
+# This detach a currently running attached container
+
+docker attach ef0
+# attach back the detached container ef0
+
+docker container ls
+# Show currently running container
+
+docker container rm 8ec
+# remove container 8ec
+
+docker image ls
+# Show all docker image that is downloaded to local
+
+docker build --tag=fastai-cudagl-jupyter:0.0.1 .
+# formal way to build a image from Dockerfile, with tag for version. check doc
+
+
+
+# note: :Z is very important, it will reset the permission for non-root user
+# http://www.projectatomic.io/blog/2015/06/using-volumes-with-docker-can-cause-problems-with-selinux/
+VOLUME /home:Z
+
+
+
+https://github.com/Paperspace/fastai-docker/blob/master/fastai-v3/Dockerfile
+https://hub.docker.com/r/nvidia/cudagl
+https://docs.docker.com/get-started/part2/
+https://github.com/NVIDIA/nvidia-docker
+	THIS WORKS! :
+https://ngc.nvidia.com/catalog/containers/nvidia:pytorch

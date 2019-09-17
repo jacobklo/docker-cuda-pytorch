@@ -1,0 +1,12 @@
+FROM cuda-pytorch-jupyter:1.0.0
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        git \
+        vim \
+        && pip --no-cache-dir install \
+        matplotlib \
+        fastai \
+        && rm -rf /var/lib/apt/lists/* \
+        && apt-get purge -y --auto-remove \
+        build-essential

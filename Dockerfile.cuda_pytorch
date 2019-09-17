@@ -1,0 +1,76 @@
+ARG UBUNTU_VERSION=18.04
+ARG PYTHON_VERSION=3.7.4
+ARG CUDA_ARCH=
+ARG CUDA=10.0
+
+FROM python:${PYTHON_VERSION}-slim-stretch as python_build
+FROM nvidia/cuda${CUDA_ARCH:+-$CUDA_ARCH}:${CUDA}-base-ubuntu${UBUNTU_VERSION}
+
+# ARCH and CUDA are specified again because the FROM directive resets ARGs
+# (but their default value is retained if set previously)
+ARG CUDA
+ARG PYTHON_VERSION
+ARG PYTORCH_VERSION=1.2.0
+ARG PYTORCH_VISION_VERSION=0.4.0
+
+
+# Needed for string substitution
+SHELL ["/bin/bash", "-c"]
+
+###############################################################
+# Import python from previous container stage
+# A Hack, since we do not want to build python from source here
+###############################################################
+
+# Without overriding existing files, recursively add all files and directories (python stuff) into current image
+COPY --from=python_build ./usr/local/. /usr/local/
+ENV PYTHON_VERSION ${PYTHON_VERSION}
+ENV LANG C.UTF-8
+
+###############################################################
+# -- END -- Import python from previous container stage
+###############################################################
+
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+         build-essential \
+         cmake \
+         cuda-command-line-tools-${CUDA/./-} \
+         cuda-cublas-${CUDA/./-} \
+         cuda-cufft-${CUDA/./-} \
+         cuda-curand-${CUDA/./-} \
+         cuda-cusolver-${CUDA/./-} \
+         cuda-cusparse-${CUDA/./-} \
+         libjpeg-dev \
+         libpng-dev \
+         sudo \
+         && rm -rf /var/lib/apt/lists/* \
+# Install Pytorch
+         && pip install --no-cache-dir torch==$PYTORCH_VERSION torchvision==$PYTORCH_VISION_VERSION \
+         && apt-get purge -y --auto-remove \
+         cmake \
+         build-essential
+
+
+# For Lazy user, a lot of config and cache is save inside their home directory
+# But docker cannot know what username would be, so just put the whole directory
+# into the docker volume, so stuff will be saved
+# note: root home directoy is not inside /home
+RUN mkdir /home/workspace
+WORKDIR /home/workspace
+
+# note: :Z is very important, it will reset the permission for non-root user
+# http://www.projectatomic.io/blog/2015/06/using-volumes-with-docker-can-cause-problems-with-selinux/
+VOLUME /home:Z
+
+
+# create a non-root user and specify with uid:1000 and gid:1000 (Maybe matching host account a good idea?)
+RUN addgroup --gid 1000 j
+RUN useradd --create-home --shell /bin/bash --uid 1000 --gid j j && adduser j sudo && passwd -d j
+RUN chown -R 1000:1000 /home \
+          && chmod -R 775 /home \
+          && chmod -R g+s /home
+#USER j
+
+
+CMD ["bash", "-l"]
