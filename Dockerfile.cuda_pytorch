@@ -65,12 +65,14 @@ VOLUME /home:Z
 
 
 # create a non-root user and specify with uid:1000 and gid:1000 (Maybe matching host account a good idea?)
-RUN addgroup --gid 1000 j
-RUN useradd --create-home --shell /bin/bash --uid 1000 --gid j j && adduser j sudo && passwd -d j
+RUN addgroup --gid 1000 jac
+RUN useradd --create-home --shell /bin/bash --uid 1000 --gid jac jac && adduser jac sudo
+# change user account with empty password, so when sudo ask password it will work, the hash is for empty
+RUN echo jac:U6aMy0wojraho | sudo chpasswd -e
 RUN chown -R 1000:1000 /home \
           && chmod -R 775 /home \
           && chmod -R g+s /home
-#USER j
+USER jac
 
 
 CMD ["bash", "-l"]

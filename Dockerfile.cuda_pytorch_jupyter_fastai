@@ -1,12 +1,35 @@
 FROM cuda-pytorch-jupyter:1.0.0
 
+# switch to root to install stuff
+USER root
+
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         git \
         vim \
+        wget \
         && pip --no-cache-dir install \
+        numpy \
+        scipy \
         matplotlib \
+        ipykernel \
+        ipywidgets \
+        sklearn \
+        seaborn \
+        networkx \
+        traitlets \
+        sympy \
+        bqplot \
+        sphinx \
+        nbsphinx \
         fastai \
+        powerline-status \
         && rm -rf /var/lib/apt/lists/* \
         && apt-get purge -y --auto-remove \
         build-essential
+
+
+# switch back to non-root user jac
+USER jac
+

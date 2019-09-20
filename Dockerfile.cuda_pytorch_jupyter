@@ -1,4 +1,12 @@
 FROM cuda-pytorch:1.0.0
+ARG port=8888
+ARG jupyter_interface=lab
+ENV PORT=$port
+ENV INTERFACE=$jupyter_interface
+
+# switch to root to install stuff
+USER root
+
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
          libexpat1 \
@@ -10,5 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 EXPOSE 8888/tcp
 
 
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser"]
+# switch back to non-root user jac
+USER jac
+
+# Need to add "sh -c" to get the command passing the environment variables
+# https://github.com/docker/docker/issues/5509#issuecomment-45243772
+CMD ["sh", "-c", "jupyter ${INTERFACE} --ip=0.0.0.0 --port=${PORT} --no-browser"]
 
