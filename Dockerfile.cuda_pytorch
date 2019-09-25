@@ -44,6 +44,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
          libjpeg-dev \
          libpng-dev \
          sudo \
+         vim \
          && rm -rf /var/lib/apt/lists/* \
 # Install Pytorch
          && pip install --no-cache-dir torch==$PYTORCH_VERSION torchvision==$PYTORCH_VISION_VERSION \
@@ -72,7 +73,26 @@ RUN echo jac:U6aMy0wojraho | sudo chpasswd -e
 RUN chown -R 1000:1000 /home \
           && chmod -R 775 /home \
           && chmod -R g+s /home
+
+
+
+############################################################### 
+# setup vim
+############################################################### 
+
+COPY .vim/ /user_profile_data/.vim
+COPY .vimrc /user_profile_data/.vimrc
+COPY komodo-python/ /user_profile_data/komodo-python
+RUN chown -R 1000:1000 /user_profile_data/
+
+###############################################################
+# -- END -- setup vim
+###############################################################
+
+
+
+
 USER jac
 
 
-CMD ["bash", "-l"]
+CMD ["sh", "-c", "cp -r /user_profile_data/. ~ && bash -l"]
