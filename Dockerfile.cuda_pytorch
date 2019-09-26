@@ -45,6 +45,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
          libpng-dev \
          sudo \
          vim \
+         git \
+         wget \
          && rm -rf /var/lib/apt/lists/* \
 # Install Pytorch
          && pip install --no-cache-dir torch==$PYTORCH_VERSION torchvision==$PYTORCH_VISION_VERSION \
@@ -80,10 +82,13 @@ RUN chown -R 1000:1000 /home \
 # setup vim
 ############################################################### 
 
-COPY .vim/ /user_profile_data/.vim
-COPY .vimrc /user_profile_data/.vimrc
-COPY komodo-python/ /user_profile_data/komodo-python
-RUN chown -R 1000:1000 /user_profile_data/
+RUN mkdir /user_profile_data/ \
+          && cd /user_profile_data/ \
+          && git clone --bare --depth 1 --single-branch https://github.com/jljacoblo/dotfiles-vim.git .gitdotvim \
+          && git --git-dir=.gitdotvim/ --work-tree=. checkout \
+          && git --git-dir=.gitdotvim/ --work-tree=. submodule update --init --recursive \
+          && echo "source .bashrc_vim" >> .bashrc \
+          && chown -R 1000:1000 .
 
 ###############################################################
 # -- END -- setup vim

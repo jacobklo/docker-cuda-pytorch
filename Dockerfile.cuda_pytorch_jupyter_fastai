@@ -6,8 +6,6 @@ USER root
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
-        git \
-        wget \
         && pip --no-cache-dir install \
         numpy \
         scipy \
