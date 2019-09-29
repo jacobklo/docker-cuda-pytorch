@@ -17,6 +17,8 @@ ARG PYTORCH_VISION_VERSION=0.4.0
 # Needed for string substitution
 SHELL ["/bin/bash", "-c"]
 
+ENV TERM xterm-256color
+
 ###############################################################
 # Import python from previous container stage
 # A Hack, since we do not want to build python from source here
