@@ -1,8 +1,10 @@
 FROM cuda-pytorch:1.0.0
 ARG port=8888
 ARG jupyter_interface=lab
+ARG notebook_path="/home/workspace"
 ENV PORT=$port
 ENV INTERFACE=$jupyter_interface
+ENV NOTEBOOK_PATH=$notebook_path
 
 # switch to root to install stuff
 USER root
@@ -23,5 +25,5 @@ USER jac
 
 # Need to add "sh -c" to get the command passing the environment variables
 # https://github.com/docker/docker/issues/5509#issuecomment-45243772
-CMD ["sh", "-c", "jupyter ${INTERFACE} --ip=0.0.0.0 --port=${PORT} --no-browser"]
+CMD ["sh", "-c", "jupyter ${INTERFACE} --notebook-dir=${NOTEBOOK_PATH} --ip=0.0.0.0 --port=${PORT} --no-browser"]
 
