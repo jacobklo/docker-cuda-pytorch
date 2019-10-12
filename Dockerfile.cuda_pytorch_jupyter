@@ -1,7 +1,7 @@
-FROM cuda-pytorch:1.0.0
+FROM cuda-pytorch:1.1.0
 ARG port=8888
 ARG jupyter_interface=lab
-ARG notebook_path="/home/workspace"
+ARG notebook_path="/"
 ENV PORT=$port
 ENV INTERFACE=$jupyter_interface
 ENV NOTEBOOK_PATH=$notebook_path
@@ -19,11 +19,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # expose jupyter port
 EXPOSE 8888/tcp
 
+RUN echo "#!/bin/sh" >> /start_jupyter.sh \
+	&& echo "jupyter ${INTERFACE} \
+	--notebook-dir=${NOTEBOOK_PATH} \
+	--ip=0.0.0.0 \
+	--port=${PORT} \
+	--no-browser &" >> /start_jupyter.sh \
+	&& echo "sh" >> /start_jupyter.sh \
+	&& chmod +x /start_jupyter.sh
 
 # switch back to non-root user jac
 USER jac
 
-# Need to add "sh -c" to get the command passing the environment variables
-# https://github.com/docker/docker/issues/5509#issuecomment-45243772
-CMD ["sh", "-c", "jupyter ${INTERFACE} --notebook-dir=${NOTEBOOK_PATH} --ip=0.0.0.0 --port=${PORT} --no-browser"]
-
+CMD /start_jupyter.sh

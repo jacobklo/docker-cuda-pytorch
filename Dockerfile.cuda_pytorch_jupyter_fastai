@@ -1,4 +1,4 @@
-FROM cuda-pytorch-jupyter:1.0.0
+FROM cuda-pytorch-jupyter:1.1.0
 
 # switch to root to install stuff
 USER root
