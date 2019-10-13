@@ -19,13 +19,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # expose jupyter port
 EXPOSE 8888/tcp
 
-RUN echo "#!/bin/sh" >> /start_jupyter.sh \
+RUN echo "#!/bin/bash" >> /start_jupyter.sh \
+	&& echo "set -m" >> /start_jupyter.sh \
 	&& echo "jupyter ${INTERFACE} \
 	--notebook-dir=${NOTEBOOK_PATH} \
 	--ip=0.0.0.0 \
 	--port=${PORT} \
 	--no-browser &" >> /start_jupyter.sh \
-	&& echo "sh" >> /start_jupyter.sh \
+	&& echo "bash" >> /start_jupyter.sh \
 	&& chmod +x /start_jupyter.sh
 
 # switch back to non-root user jac
