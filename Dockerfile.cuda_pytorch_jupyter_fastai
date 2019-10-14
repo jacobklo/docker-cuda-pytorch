@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         sphinx \
         nbsphinx \
         fastai \
+	fire \
         powerline-status \
         && rm -rf /var/lib/apt/lists/* \
         && apt-get purge -y --auto-remove \
