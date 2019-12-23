@@ -1,6 +1,6 @@
 FROM cuda-pytorch:1.1.0
 ARG port=8888
-ARG jupyter_interface=lab
+ARG jupyter_interface=notebook
 ARG notebook_path="/"
 ENV PORT=$port
 ENV INTERFACE=$jupyter_interface
@@ -13,6 +13,7 @@ USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
          libexpat1 \
          && pip install --no-cache-dir jupyterlab \
+         jupyter_contrib_nbextensions \
          && rm -rf /var/lib/apt/lists/*
 
 
@@ -21,7 +22,8 @@ EXPOSE 8888/tcp
 
 RUN echo "#!/bin/bash" >> /start_jupyter.sh \
 	&& echo "set -m" >> /start_jupyter.sh \
-	&& echo "jupyter ${INTERFACE} \
+	&& echo "jupyter contrib nbextension install --user \
+        && jupyter ${INTERFACE} \
 	--notebook-dir=${NOTEBOOK_PATH} \
 	--ip=0.0.0.0 \
 	--port=${PORT} \
