@@ -1,17 +1,15 @@
 ARG UBUNTU_VERSION=18.04
-ARG PYTHON_VERSION=3.7.4
-ARG CUDA_ARCH=
-ARG CUDA=10.0
+ARG PYTHON_VERSION=3.7.6-buster
+ARG CUDA=10.1-cudnn7
 
-FROM python:${PYTHON_VERSION}-slim-stretch as python_build
-FROM nvidia/cuda${CUDA_ARCH:+-$CUDA_ARCH}:${CUDA}-base-ubuntu${UBUNTU_VERSION}
+FROM python:${PYTHON_VERSION} as python_build
+FROM nvidia/cuda:${CUDA}-devel-ubuntu${UBUNTU_VERSION}
 
 # ARCH and CUDA are specified again because the FROM directive resets ARGs
 # (but their default value is retained if set previously)
 ARG CUDA
 ARG PYTHON_VERSION
-ARG PYTORCH_VERSION=1.2.0
-ARG PYTORCH_VISION_VERSION=0.4.0
+ARG PYTORCH_URL="torch===1.4.0 torchvision===0.5.0 torchaudio===0.4.0 torchtext===0.5.0"
 
 
 # Needed for string substitution
@@ -22,6 +20,7 @@ ENV TERM xterm-256color
 ###############################################################
 # Import python from previous container stage
 # A Hack, since we do not want to build python from source here
+# Note: ./usr/local/. format will merge 2 directories
 ###############################################################
 
 # Without overriding existing files, recursively add all files and directories (python stuff) into current image
@@ -35,14 +34,15 @@ ENV LANG C.UTF-8
 
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-         build-essential \
-         cmake \
-         cuda-command-line-tools-${CUDA/./-} \
-         cuda-cublas-${CUDA/./-} \
-         cuda-cufft-${CUDA/./-} \
-         cuda-curand-${CUDA/./-} \
-         cuda-cusolver-${CUDA/./-} \
-         cuda-cusparse-${CUDA/./-} \
+#         build-essential \
+#         cmake \
+#         cuda-command-line-tools-${CUDA/./-} \
+#         cuda-core-${CUDA/./-} \
+#         cuda-cublas-${CUDA/./-} \
+#         cuda-cufft-${CUDA/./-} \
+#         cuda-curand-${CUDA/./-} \
+#         cuda-cusolver-${CUDA/./-} \
+#         cuda-cusparse-${CUDA/./-} \
          libjpeg-dev \
          libpng-dev \
          sudo \
@@ -50,11 +50,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
          git \
          wget \
          && rm -rf /var/lib/apt/lists/* \
+# Install Glibc 2.30 for python to run correctly
+         && wget http://archive.ubuntu.com/ubuntu/pool/main/g/glibc/libc6_2.30-0ubuntu3_amd64.deb \
+         && dpkg -i libc6_2.30-0ubuntu3_amd64.deb \
+         && rm -rf /etc/ld.so.cache \
+         && ldconfig \   
 # Install Pytorch
-         && pip install --no-cache-dir torch==$PYTORCH_VERSION torchvision==$PYTORCH_VISION_VERSION \
-         && apt-get purge -y --auto-remove \
-         cmake \
-         build-essential
+         && pip install --upgrade --no-cache-dir pip
+
+
+RUN pip install --no-cache-dir ${PYTORCH_URL}
 
 
 # For Lazy user, a lot of config and cache is save inside their home directory
