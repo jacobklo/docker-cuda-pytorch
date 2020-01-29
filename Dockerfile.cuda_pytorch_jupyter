@@ -1,4 +1,4 @@
-FROM cuda-pytorch:1.1.0
+FROM cuda-pytorch:1.4.0
 ARG port=8888
 ARG jupyter_interface=notebook
 ARG notebook_path="/"
