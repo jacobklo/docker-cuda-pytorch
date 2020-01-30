@@ -1,0 +1,24 @@
+FROM gui_able:latest
+
+USER root
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	software-properties-common \
+	wget \
+	vim \
+# For dropbox
+	libglib2.0-0 \
+	firefox
+
+#RUN sudo add-apt-repository -y ppa:ubuntu-x-swat/updates
+
+#RUN apt-get install -y --no-install-recommends \
+#	mesa \
+#	&& rm -rf /var/lib/apt/lists/*
+
+
+USER developer
+
+RUN cd ~ && wget -O - "https://www.dropbox.com/download?plat=lnx.x86_64" --no-check-certificate | tar xzf -
+
+RUN cd ~ && wget -O dropbox.py "https://www.dropbox.com/download?dl=packages/dropbox.py" --no-check-certificate

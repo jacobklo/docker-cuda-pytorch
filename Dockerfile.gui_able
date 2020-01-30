@@ -1,0 +1,48 @@
+# To Run this container, use command:
+# docker run -ti -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix xterm
+
+
+ARG PYTHON_VERSION=3.7.4-slim-stretch
+ARG UBUNTU_VERSION=18.04
+
+FROM python:${PYTHON_VERSION} as python_build
+FROM ubuntu:${UBUNTU_VERSION}
+
+ 
+###############################################################
+# Import python from previous container stage
+# A Hack, since we do not want to build python from source here
+# Note: ./usr/local/. format will merge 2 directories
+###############################################################
+
+# Without overriding existing files, recursively add all files and directories (python stuff) into current image
+COPY --from=python_build ./usr/local/. /usr/local/
+ENV PYTHON_VERSION ${PYTHON_VERSION}
+ENV LANG C.UTF-8
+###############################################################
+# -- END -- Import python from previous container stage
+###############################################################
+
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+	sudo \
+	xterm
+
+
+
+## This part is setup to run GUI app on host
+# http://fabiorehm.com/blog/2014/09/11/running-gui-apps-with-docker/
+
+# Replace 1000 with your user / group id
+RUN export uid=1000 gid=1000 && \
+    mkdir -p /home/developer && \
+    echo "developer:x:${uid}:${gid}:Developer,,,:/home/developer:/bin/bash" >> /etc/passwd && \
+    echo "developer:x:${uid}:" >> /etc/group && \
+    echo "developer ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/developer && \
+    chmod 0440 /etc/sudoers.d/developer && \
+    chown ${uid}:${gid} -R /home/developer
+
+USER developer
+ENV HOME /home/developer
+
+CMD xterm
