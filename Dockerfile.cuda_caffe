@@ -1,4 +1,4 @@
-FROM py-boost 
+FROM py-cmake-boost 
 
 # set no user input, so deconf will not ask question while install
 ARG DEBIAN_FRONTEND=noninteractive
@@ -13,17 +13,16 @@ WORKDIR $CAFFE_ROOT
 
 RUN apt-get update && apt-get install -y -qq --no-install-recommends \
         libatlas-base-dev \
-#        libboost-all-dev \
         libgflags-dev \
         libgoogle-glog-dev \
         libhdf5-serial-dev \
         libleveldb-dev \
         liblmdb-dev \
         libopencv-dev \
-#	python3-opencv \
         libprotobuf-dev \
         libsnappy-dev \
         protobuf-compiler \
+	doxygen \
         && rm -rf /var/lib/apt/lists/*
 
 
@@ -44,14 +43,16 @@ RUN git clone --depth 1 https://github.com/NVIDIA/nccl.git \
     && cd .. \
     && rm -rf nccl
 
-#RUN mkdir build \
-#    && cd build \
-#    && cmake -DUSE_CUDNN=1 -DUSE_NCCL=1 .. \
-#    && make -j"$(nproc)"
+RUN mkdir build \
+    && cd build \
+    && cmake -DUSE_CUDNN=1 -DUSE_NCCL=1 -DCUDA_ARCH_NAME=Pascal .. \
+    && make -j"$(nproc)"
 
  
 ENV PYCAFFE_ROOT $CAFFE_ROOT/python
 ENV PYTHONPATH $PYCAFFE_ROOT:$PYTHONPATH
 ENV PATH $CAFFE_ROOT/build/tools:$PYCAFFE_ROOT:$PATH
 RUN echo "$CAFFE_ROOT/build/lib" >> /etc/ld.so.conf.d/caffe.conf && ldconfig
+
+USER jac
 
