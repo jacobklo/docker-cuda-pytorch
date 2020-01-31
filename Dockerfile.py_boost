@@ -1,0 +1,33 @@
+FROM cuda-py:0.9.9 
+
+USER root
+
+# set no user input, so deconf will not ask question while install
+ARG DEBIAN_FRONTEND=noninteractive
+
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        cmake \
+        && rm -rf /var/lib/apt/lists/*
+
+
+#https://askubuntu.com/questions/944035/installing-libboost-python-dev-for-python3-without-installing-python2-7
+# Compile boost library with python3, instead of apt-get install libboost-all-dev
+RUN cd /usr/src \
+	&& wget --no-verbose https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.gz \
+	&& tar -zxvf boost_1_72_0.tar.gz \
+	&& ln -s /usr/local/include/python3.6m /usr/local/include/python3.6
+
+
+RUN cd /usr/src/boost_1_72_0 \
+        && ./bootstrap.sh --with-python=$(which python3) \
+	&& ./b2 \
+	&& ./b2 install \
+	&& rm /usr/local/include/python3.6 \
+	&& ldconfig \
+	&& cd /\
+	&& rm -rf /usr/src/boost_1_72_0 \
+	&& rm /usr/src/boost_1_72_0.tar.gz
+
+
+

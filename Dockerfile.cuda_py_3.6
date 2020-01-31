@@ -1,0 +1,92 @@
+ARG UBUNTU_VERSION=18.04
+ARG PYTHON_VERSION=3.6.10-slim-stretch
+ARG CUDA=10.1-cudnn7
+
+FROM python:${PYTHON_VERSION} as python_build
+FROM nvidia/cuda:${CUDA}-devel-ubuntu${UBUNTU_VERSION}
+
+# ARCH and CUDA are specified again because the FROM directive resets ARGs
+# (but their default value is retained if set previously)
+ARG CUDA
+ARG PYTHON_VERSION
+
+
+# Needed for string substitution
+SHELL ["/bin/bash", "-c"]
+
+ENV TERM xterm-256color
+
+###############################################################
+# Import python from previous container stage
+# A Hack, since we do not want to build python from source here
+# Note: ./usr/local/. format will merge 2 directories
+###############################################################
+
+# Without overriding existing files, recursively add all files and directories (python stuff) into current image
+COPY --from=python_build ./usr/local/. /usr/local/
+ENV PYTHON_VERSION ${PYTHON_VERSION}
+ENV LANG C.UTF-8
+
+###############################################################
+# -- END -- Import python from previous container stage
+###############################################################
+
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+         libjpeg-dev \
+         libpng-dev \
+         sudo \
+         vim \
+         git \
+         wget \
+         && rm -rf /var/lib/apt/lists/* \
+         && rm -rf /etc/ld.so.cache \
+         && ldconfig \   
+         && pip install --no-cache-dir --upgrade pip 
+
+
+# For Lazy user, a lot of config and cache is save inside their home directory
+# But docker cannot know what username would be, so just put the whole directory
+# into the docker volume, so stuff will be saved
+# note: root home directoy is not inside /home
+RUN mkdir /home/workspace
+WORKDIR /home/workspace
+
+# note: :Z is very important, it will reset the permission for non-root user
+# http://www.projectatomic.io/blog/2015/06/using-volumes-with-docker-can-cause-problems-with-selinux/
+VOLUME /home:Z
+
+
+# create a non-root user and specify with uid:1000 and gid:1000 (Maybe matching host account a good idea?)
+RUN addgroup --gid 1000 jac
+RUN useradd --create-home --shell /bin/bash --uid 1000 --gid jac jac && adduser jac sudo
+# change user account with empty password, so when sudo ask password it will work, the hash is for empty
+RUN echo jac:U6aMy0wojraho | sudo chpasswd -e
+RUN chown -R 1000:1000 /home \
+          && chmod -R 775 /home \
+          && chmod -R g+s /home
+
+
+
+############################################################### 
+# setup vim
+############################################################### 
+
+RUN mkdir /user_profile_data/ \
+          && cd /user_profile_data/ \
+          && git clone --bare --depth 1 --single-branch https://github.com/jljacoblo/dotfiles-vim.git .gitdotvim \
+          && git --git-dir=.gitdotvim/ --work-tree=. checkout \
+          && echo "source ~/.bashrc_vim" >> .bashrc \
+          && chown -R 1000:1000 .
+
+###############################################################
+# -- END -- setup vim
+###############################################################
+
+
+
+
+USER jac
+
+
+CMD ["sh", "-c", "cp -r /user_profile_data/. ~ && bash -l"]
