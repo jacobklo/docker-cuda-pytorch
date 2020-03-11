@@ -1,4 +1,4 @@
-FROM cuda-pytorch-jupyter:1.4444.0
+FROM cuda-pytorch-jupyter:1.1.0
 
 # switch to root to install stuff
 USER root
@@ -6,6 +6,11 @@ USER root
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
+	# for running Pycharm GUI
+	default-jdk \
+	# for running Sourcetrail GUI
+	libxkbcommon-x11-0 \
+	libxkbcommon-dev \
         && pip --no-cache-dir install \
         numpy \
         scipy \
@@ -28,6 +33,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         && apt-get purge -y --auto-remove \
         build-essential
 
+# Setup running GUI apps
+RUN export uid=1000 gid=1000 && \
+    mkdir -p /home/jac && \
+    echo "jac:x:${uid}:${gid}:jac,,,:/home/jac:/bin/bash" >> /etc/passwd && \
+    echo "jac:x:${uid}:" >> /etc/group && \
+    echo "jac ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/jac && \
+    chmod 0440 /etc/sudoers.d/jac && \
+    chown ${uid}:${gid} -R /home/jac
 
 # switch back to non-root user jac
 USER jac
